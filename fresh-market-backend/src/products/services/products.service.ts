@@ -79,6 +79,7 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException('Product not found or does not belong to your shop.');
     }
+     console.log('[findAllProductsByOwner] Products:', product);
     return product;
   }
 
@@ -170,11 +171,11 @@ export class ProductsService {
     if (queryDto.maxPrice) {
       queryBuilder.andWhere('product.price <= :maxPrice', { maxPrice: parseFloat(queryDto.maxPrice) });
     }
-    if (queryDto.isAvailable !== undefined) {
-      // Ensure boolean transformation for string 'true'/'false' from query
-      const isAvailableBoolean = queryDto.isAvailable === 'true';
-      queryBuilder.andWhere('product.isAvailable = :isAvailableParam', { isAvailableParam: isAvailableBoolean });
-    }
+    if (queryDto.isAvailable != null) { // handles both null and undefined
+  const isAvailableBoolean = queryDto.isAvailable === 'true';
+  queryBuilder.andWhere('product.isAvailable = :isAvailableParam', { isAvailableParam: isAvailableBoolean });
+}
+
 
     return queryBuilder.getMany();
   }

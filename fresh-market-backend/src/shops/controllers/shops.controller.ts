@@ -8,10 +8,14 @@ import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { UserRole } from '../../common/entities/profile.entity';
 import { FindManyOptions } from 'typeorm'; // For TypeORM query options
+import { ProductsService } from '../../products/services/products.service';
 
 @Controller('shops')
 export class ShopsController {
-  constructor(private shopsService: ShopsService) {}
+  constructor(
+    private shopsService: ShopsService,
+    private productsService: ProductsService, // Inject ProductsService
+  ) {}
 
   // --- Vendor-specific Endpoints ---
 
@@ -59,10 +63,19 @@ export class ShopsController {
   ) {
     return this.shopsService.searchShops(city, deliveryRadius);
   }
-
+ @Get('me/products')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.VENDOR)
+  @HttpCode(HttpStatus.OK)
+  async getMyProducts(@Request() req) {
+    console.log('[getMyProducts] Vendor ID:', req.user.id);
+    return this.productsService.findAllProductsByOwner(req.user.id);
+  }
   @Get(':shopId')
   @HttpCode(HttpStatus.OK)
   async getShopById(@Param('shopId') shopId: string) {
     return this.shopsService.findShopById(shopId);
   }
+
+  
 }

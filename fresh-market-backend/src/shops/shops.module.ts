@@ -7,12 +7,14 @@ import { Shop } from '../common/entities/shop.entity';
 import { Profile } from '../common/entities/profile.entity'; // Also needed for relationships/validation
 import { AuthModule } from '../auth/auth.module'; // To use JwtAuthGuard and RolesGuard
 import { UsersModule } from '../users/users.module'; // To use UsersService (e.g., for checking vendor roles)
+import { ProductsModule } from '../products/products.module'; 
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Shop, Profile]), // Register Shop and Profile entities for this module
     forwardRef(() => AuthModule), // Use forwardRef to resolve circular dependency if AuthModule also imports this
     UsersModule, // Import UsersModule to inject UsersService
+    ProductsModule,
   ],
   controllers: [ShopsController],
   providers: [ShopsService],

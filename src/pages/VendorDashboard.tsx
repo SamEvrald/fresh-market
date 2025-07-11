@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import { useToast } from "@/hooks/use-toast";
 import { useShops } from "@/hooks/useShops";
 import { useProducts } from "@/hooks/useProducts";
+import api from "@/api/axios";
 
 const API_BASE_URL = 'http://localhost:3000/api/v1'; // Your NestJS backend URL
 
@@ -26,82 +27,60 @@ const VendorDashboard = () => {
   const { shops, isLoading: shopsLoading, updateShop } = useShops();
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      // You'll need to pass an authentication token if your backend requires it
-      const headers = {
-        'Content-Type': 'application/json',
-        // 'Authorization': `Bearer YOUR_AUTH_TOKEN_HERE` // Add your auth token
-      };
+   const fetchDashboardData = async () => {
+  try {
+    // --- Fetch Shop-specific Products ---
+    const { data: productsData } = await api.get('/shops/me/products');
+    setTotalProducts(productsData.length);
 
-      try {
-        // --- Fetch Shop-specific Products ---
-        // This will give you all products for the current vendor's shop
-        const productsResponse = await fetch(`${API_BASE_URL}/shops/me/products`, { headers });
-        if (!productsResponse.ok) throw new Error(`Failed to fetch products: ${productsResponse.statusText}`);
-        const productsData = await productsResponse.json();
-        setTotalProducts(productsData.length);
+    const sortedProducts = [...productsData]
+      .sort((a: any, b: any) => (b.sold || 0) - (a.sold || 0))
+      .slice(0, 4);
+    setTopProducts(sortedProducts.map((p: any) => ({
+      name: p.name,
+      sold: p.sold || 0,
+      revenue: (p.sold || 0) * (p.price || 0)
+    })));
 
-        // Calculate top products based on `sold` or `revenue` fields if your product DTO includes them
-        // For demonstration, let's assume a 'sold' field in each product object
-        const sortedProducts = [...productsData].sort((a: any, b: any) => (b.sold || 0) - (a.sold || 0)).slice(0, 4);
-        setTopProducts(sortedProducts.map((p: any) => ({
-          name: p.name,
-          sold: p.sold || 0, // Assume 'sold' property exists
-          revenue: (p.sold || 0) * (p.price || 0) // Basic revenue calculation
-        })));
+    // --- Fetch Shop-specific Orders ---
+    const { data: ordersData } = await api.get('/shops/me/orders');
 
+    const active = ordersData.filter((order: any) =>
+      ['New', 'Preparing', 'Out for Delivery'].includes(order.status)
+    ).length;
+    setActiveOrders(active);
 
-        // --- Fetch Shop-specific Orders ---
-        // This will give you all orders for the current vendor's shop
-        const ordersResponse = await fetch(`${API_BASE_URL}/shops/me/orders`, { headers });
-        if (!ordersResponse.ok) throw new Error(`Failed to fetch orders: ${ordersResponse.statusText}`);
-        const ordersData = await ordersResponse.json();
+    const today = new Date().toISOString().split('T')[0];
+    let revenueToday = 0;
+    const recent: any[] = [];
 
-        // Calculate Active Orders
-        const active = ordersData.filter((order: any) =>
-          order.status === 'New' || order.status === 'Preparing' || order.status === 'Out for Delivery'
-        ).length;
-        setActiveOrders(active);
-
-        // Calculate Today's Revenue and Recent Orders
-        const today = new Date().toISOString().split('T')[0];
-        let revenueToday = 0;
-        const recent: any[] = [];
-
-        ordersData.forEach((order: any) => {
-          // Assuming order.createdAt is an ISO string or similar date format
-          if (order.createdAt && order.createdAt.startsWith(today)) {
-            revenueToday += order.total_amount || 0; // Assuming total_amount field
-          }
-          recent.push({ // Map to your dashboard's expected format
-            id: order.id,
-            customer: order.customer_name || 'N/A', // Assuming a customer_name in order or relation
-            items: order.items.map((item: any) => `${item.quantity}x ${item.product_name}`).join(', '),
-            amount: order.total_amount,
-            status: order.status,
-            time: new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), // Format time
-          });
-        });
-
-        setTodayRevenue(revenueToday);
-        setRecentOrders(recent.slice(0, 5)); // Show top 5 recent orders
-
-        // --- Monthly Growth (Requires dedicated backend logic) ---
-        // For monthly growth, you would ideally have a backend endpoint that calculates
-        // and returns this metric, perhaps from an "Analytics" module.
-        // Example: await fetch(`${API_BASE_URL}/analytics/monthly-growth`);
-        setMonthlyGrowth(18.5); // Placeholder, update once backend logic is ready.
-
-      } catch (error: any) {
-        console.error("Error fetching dashboard data:", error);
-        toast({
-          title: "Error",
-          description: error.message || "Failed to load dashboard data.",
-          variant: "destructive",
-        });
+    ordersData.forEach((order: any) => {
+      if (order.createdAt?.startsWith(today)) {
+        revenueToday += order.total_amount || 0;
       }
-    };
+      recent.push({
+        id: order.id,
+        customer: order.customer_name || 'N/A',
+        items: order.items.map((item: any) => `${item.quantity}x ${item.product_name}`).join(', '),
+        amount: order.total_amount,
+        status: order.status,
+        time: new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      });
+    });
 
+    setTodayRevenue(revenueToday);
+    setRecentOrders(recent.slice(0, 5));
+
+    setMonthlyGrowth(18.5); // Placeholder
+  } catch (error: any) {
+    console.error("Error fetching dashboard data:", error);
+    toast({
+      title: "Error",
+      description: error.message || "Failed to load dashboard data.",
+      variant: "destructive",
+    });
+  }
+};
     fetchDashboardData();
   }, [toast, products, shops]); // Dependencies: re-run if products or shops data from hooks change
 
@@ -125,38 +104,26 @@ const VendorDashboard = () => {
     // createProduct.mutate({ name: "New Product", price: 100, /* ...other fields */ });
   };
 
-  const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
-    try {
-      const headers = {
-        'Content-Type': 'application/json',
-        // 'Authorization': `Bearer YOUR_AUTH_TOKEN_HERE`
-      };
-      const response = await fetch(`${API_BASE_URL}/shops/me/orders/${orderId}/status`, {
-        method: 'PATCH',
-        headers: headers,
-        body: JSON.stringify({ status: newStatus }), // Using UpdateOrderStatusDto
-      });
+ const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
+  try {
+    await api.patch(`/shops/me/orders/${orderId}/status`, { status: newStatus });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Failed to update order status: ${response.statusText}`);
-      }
-      toast({
-        title: "Order Status Updated",
-        description: `Order ${orderId} status changed to ${newStatus}.`,
-      });
-      // Re-fetch dashboard data to reflect changes
-      // This will trigger the useEffect to re-run
-      window.location.reload(); // Simple reload for demo, consider more precise state management
-    } catch (error: any) {
-      console.error("Error updating order status:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update order status.",
-        variant: "destructive",
-      });
-    }
-  };
+    toast({
+      title: "Order Status Updated",
+      description: `Order ${orderId} status changed to ${newStatus}.`,
+    });
+
+    window.location.reload();
+  } catch (error: any) {
+    console.error("Error updating order status:", error);
+    toast({
+      title: "Error",
+      description: error.message || "Failed to update order status.",
+      variant: "destructive",
+    });
+  }
+};
+
 
 
   return (

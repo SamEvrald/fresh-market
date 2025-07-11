@@ -164,4 +164,11 @@ export class ProductsController {
   async getProductById(@Param('productId') productId: string) {
     return this.productsService.findProductById(productId);
   }
+
+  @Get('products')
+@HttpCode(HttpStatus.OK)
+async getAvailableProducts(@Query() searchProductsDto: SearchProductsDto) {
+  return this.productsService.searchProducts(searchProductsDto);
+}
+
 }
