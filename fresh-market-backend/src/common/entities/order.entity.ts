@@ -30,7 +30,7 @@ total_amount: number;
   status: OrderStatus;
 
   @Column({ name: 'shipping_address' })
-  shippingAddress: string;
+  deliveryAddress: string;
 
   @Column({ name: 'contact_phone', nullable: true })
   contactPhone: string;

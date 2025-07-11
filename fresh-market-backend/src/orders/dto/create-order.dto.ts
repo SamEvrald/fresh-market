@@ -23,7 +23,7 @@ export class CreateOrderDto {
 
   @IsString()
   @IsNotEmpty()
-  shippingAddress: string;
+  deliveryAddress: string;
 
   @IsOptional()
   @IsString()
