@@ -18,6 +18,7 @@ import CustomerAccount from "./pages/CustomerAccount";
 import OrderTracking from "./pages/OrderTracking";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
+import AdminLogin from "./pages/AdminLogin";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/login/admin" element={<AdminLogin />} />
             <Route path="/products" element={<ProductCatalog />} />
             <Route path="/shop/:id" element={<ShopProfile />} />
             <Route 

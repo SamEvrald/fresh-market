@@ -7,6 +7,7 @@ import { Profile, UserRole } from '../../common/entities/profile.entity';
 import { CreateShopDto } from '../dto/create-shop.dto';
 import { UpdateShopDto } from '../dto/update-shop.dto';
 import { UsersService } from '../../users/services/users.service'; // To check user role/profile
+import { Order } from 'src/common/entities/order.entity';
 
 @Injectable()
 export class ShopsService {
@@ -21,6 +22,8 @@ export class ShopsService {
     @InjectRepository(Profile)
     private profilesRepository: Repository<Profile>, // To verify profile roles etc.
     private usersService: UsersService, // To fetch user/profile details
+    @InjectRepository(Order)
+    private ordersRepository: Repository<Order>
   ) {}
 
   /**
@@ -114,6 +117,20 @@ export class ShopsService {
     }
     return shop;
   }
+
+  async findOrdersByOwnerId(ownerId: string): Promise<Order[]> {
+  const shop = await this.findShopByOwnerId(ownerId);
+  if (!shop) {
+    throw new NotFoundException('Shop not found for the vendor.');
+  }
+
+  return this.ordersRepository.find({
+    where: { shopId: shop.id },
+    relations: ['items', 'customer'], // or however you structure your orders
+    order: { createdAt: 'DESC' },
+  });
+}
+
 
   /**
    * Searches for shops by city and/or delivery radius.

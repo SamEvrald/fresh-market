@@ -19,63 +19,65 @@ export class ShopsController {
 
   // --- Vendor-specific Endpoints ---
 
-  @Post('/')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.VENDOR)
-  @HttpCode(HttpStatus.CREATED)
-  async createShop(@Request() req, @Body() createShopDto: CreateShopDto) {
-    // req.user.id is the user's ID, which is also the profile ID for owner_id
-    const shop = await this.shopsService.createShop(createShopDto, req.user.id);
-    return { message: 'Shop created successfully, awaiting admin activation.', shop };
-  }
+@Post('/')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.VENDOR)
+@HttpCode(HttpStatus.CREATED)
+async createShop(@Request() req, @Body() createShopDto: CreateShopDto) {
+  const shop = await this.shopsService.createShop(createShopDto, req.user.id);
+  return { message: 'Shop created successfully, awaiting admin activation.', shop };
+}
 
-  @Get('me')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.VENDOR)
-  @HttpCode(HttpStatus.OK)
-  async getMyShop(@Request() req) {
-    const shop = await this.shopsService.findShopByOwnerId(req.user.id);
-    return shop;
-  }
+@Get('me')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.VENDOR)
+@HttpCode(HttpStatus.OK)
+async getMyShop(@Request() req) {
+  const shop = await this.shopsService.findShopByOwnerId(req.user.id);
+  return shop;
+}
 
-  @Patch('me')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.VENDOR)
-  @HttpCode(HttpStatus.OK)
-  async updateMyShop(@Request() req, @Body() updateShopDto: UpdateShopDto) {
-    const updatedShop = await this.shopsService.updateShop(req.user.id, updateShopDto);
-    return { message: 'Shop updated successfully.', shop: updatedShop };
-  }
+@Patch('me')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.VENDOR)
+@HttpCode(HttpStatus.OK)
+async updateMyShop(@Request() req, @Body() updateShopDto: UpdateShopDto) {
+  const updatedShop = await this.shopsService.updateShop(req.user.id, updateShopDto);
+  return { message: 'Shop updated successfully.', shop: updatedShop };
+}
 
-  // --- Customer/Public-facing Endpoints ---
+// ✅ MOVE THIS HERE
+@Get('me/products')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.VENDOR)
+@HttpCode(HttpStatus.OK)
+async getMyProducts(@Request() req) {
+  console.log('[getMyProducts] Vendor ID:', req.user.id);
+  return this.productsService.findAllProductsByOwner(req.user.id);
+}
 
-  @Get('/')
-  @HttpCode(HttpStatus.OK)
-  async getAllActiveShops() {
-    return this.shopsService.findAllActiveShops();
-  }
+// --- Customer/Public-facing Endpoints ---
 
-  @Get('search')
-  @HttpCode(HttpStatus.OK)
-  async searchShops(
-    @Query('city') city?: string,
-    @Query('deliveryRadius') deliveryRadius?: number,
-  ) {
-    return this.shopsService.searchShops(city, deliveryRadius);
-  }
- @Get('me/products')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.VENDOR)
-  @HttpCode(HttpStatus.OK)
-  async getMyProducts(@Request() req) {
-    console.log('[getMyProducts] Vendor ID:', req.user.id);
-    return this.productsService.findAllProductsByOwner(req.user.id);
-  }
-  @Get(':shopId')
-  @HttpCode(HttpStatus.OK)
-  async getShopById(@Param('shopId') shopId: string) {
-    return this.shopsService.findShopById(shopId);
-  }
+@Get('/')
+@HttpCode(HttpStatus.OK)
+async getAllActiveShops() {
+  return this.shopsService.findAllActiveShops();
+}
 
+@Get('search')
+@HttpCode(HttpStatus.OK)
+async searchShops(
+  @Query('city') city?: string,
+  @Query('deliveryRadius') deliveryRadius?: number,
+) {
+  return this.shopsService.searchShops(city, deliveryRadius);
+}
+
+// ❗️MUST BE LAST
+@Get(':shopId')
+@HttpCode(HttpStatus.OK)
+async getShopById(@Param('shopId') shopId: string) {
+  return this.shopsService.findShopById(shopId);
+}
   
 }

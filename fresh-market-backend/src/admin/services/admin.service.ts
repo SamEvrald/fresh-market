@@ -17,6 +17,74 @@ import { UpdateOrderStatusDto } from '../../orders/dto/update-order-status.dto';
 
 @Injectable()
 export class AdminService {
+  // --- Dashboard Data ---
+  async getDashboardStats() {
+    // Example: count vendors, customers, orders, revenue
+    const totalVendors = await this.profilesRepository.count({ where: { role: UserRole.VENDOR } });
+    const totalCustomers = await this.profilesRepository.count({ where: { role: UserRole.CUSTOMER } });
+    const totalOrders = await this.ordersRepository.count();
+    const totalRevenueResult = await this.ordersRepository
+      .createQueryBuilder('order')
+      .select('SUM(order.total_amount)', 'totalRevenue')
+      .where('order.status = :status', { status: 'paid' })
+      .getRawOne();
+    return {
+      totalVendors,
+      totalCustomers,
+      totalOrders,
+      totalRevenue: parseFloat(totalRevenueResult.totalRevenue || 0),
+    };
+  }
+
+  async getPendingVendors() {
+    // Example: shops with isActive === false
+    const shops = await this.shopsRepository.find({ where: { isActive: false }, relations: ['owner'] });
+    // Map to expected frontend shape
+    return shops.map(shop => ({
+      id: shop.id,
+      name: shop.name,
+      owner: shop.owner?.fullName || '',
+      date: shop.createdAt,
+      status: 'pending',
+    }));
+  }
+
+  async getRecentOrders() {
+    // Example: last 10 orders
+    const orders = await this.ordersRepository.find({
+      order: { createdAt: 'DESC' },
+      take: 10,
+      relations: ['customer', 'shop'],
+    });
+    return orders.map(order => ({
+      id: order.id,
+      customer: order.customer?.fullName || '',
+      vendor: order.shop?.name || '',
+      amount: order.total_amount,
+      status: order.status,
+    }));
+  }
+
+  async getTopVendors() {
+    // Example: top 5 vendors by revenue
+    const result = await this.shopsRepository
+      .createQueryBuilder('shop')
+      .leftJoin('shop.orders', 'order')
+      .select('shop.name', 'name')
+      .addSelect('COUNT(order.id)', 'orders')
+      .addSelect('SUM(order.total_amount)', 'revenue')
+      .groupBy('shop.id')
+      .orderBy('revenue', 'DESC')
+      .limit(5)
+      .getRawMany();
+    // Add dummy rating for now
+    return result.map(v => ({
+      name: v.name,
+      orders: Number(v.orders),
+      revenue: Number(v.revenue),
+      rating: 4.5,
+    }));
+  }
   private readonly logger = new Logger(AdminService.name);
 
   constructor(
@@ -142,7 +210,7 @@ export class AdminService {
     const totalOrders = await this.ordersRepository.count();
     const totalRevenueResult = await this.ordersRepository
       .createQueryBuilder('order')
-      .select('SUM(order.totalPrice)', 'totalRevenue')
+      .select('SUM(order.total_amount)', 'totalRevenue')
       .where('order.paymentStatus = :status', { status: 'paid' })
       .getRawOne();
 

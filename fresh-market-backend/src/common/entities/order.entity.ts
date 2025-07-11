@@ -16,8 +16,11 @@ export class Order {
   @Column({ name: 'shop_id', type: 'uuid' })
   shopId: string; // Foreign key to Shop
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
-  totalPrice: number;
+  // @Column({ type: 'decimal', precision: 10, scale: 2 })
+  // totalPrice: number;
+
+@Column({ type: 'numeric', name: 'total_amount' })
+total_amount: number;
 
   @Column({
     type: 'enum',
@@ -43,6 +46,8 @@ export class Order {
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
+  
+
 
   // Relations
   @ManyToOne(() => Profile, profile => profile.customerOrders)

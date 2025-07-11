@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "../api/axios";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Users, Store, ShoppingBag, TrendingUp, Clock, AlertCircle, Package, DollarSign, AlertTriangle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,29 +10,50 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const AdminDashboard = () => {
-  const [totalVendors] = useState(48);
-  const [totalCustomers] = useState(1247);
-  const [totalOrders] = useState(356);
-  const [totalRevenue] = useState(125400);
+  const [totalVendors, setTotalVendors] = useState(0);
+  const [totalCustomers, setTotalCustomers] = useState(0);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [pendingVendors, setPendingVendors] = useState([]);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [topVendors, setTopVendors] = useState([]);
 
-  const pendingVendors = [
-    { id: 1, name: "Fresh Garden Fruits", owner: "John Smith", date: "2024-01-15", status: "pending" },
-    { id: 2, name: "Organic Valley", owner: "Sarah Johnson", date: "2024-01-14", status: "pending" },
-    { id: 3, name: "Tropical Delights", owner: "Mike Davis", date: "2024-01-13", status: "pending" }
-  ];
-
-  const recentOrders = [
-    { id: "ORD001", customer: "Alice Brown", vendor: "Green Valley", amount: 450, status: "completed" },
-    { id: "ORD002", customer: "Bob Wilson", vendor: "Fruit Paradise", amount: 320, status: "processing" },
-    { id: "ORD003", customer: "Carol Davis", vendor: "Fresh Corner", amount: 280, status: "completed" }
-  ];
-
-  const topVendors = [
-    { name: "Green Valley Fruits", orders: 156, revenue: 28400, rating: 4.9 },
-    { name: "Tropical Paradise", orders: 134, revenue: 24800, rating: 4.8 },
-    { name: "Organic Fresh", orders: 98, revenue: 18600, rating: 4.7 },
-    { name: "Fruit Corner", orders: 87, revenue: 16200, rating: 4.6 }
-  ];
+  useEffect(() => {
+    // Replace with your actual backend endpoints
+    const fetchStats = async () => {
+      try {
+        const statsRes = await axios.get("/admin/stats");
+        setTotalVendors(statsRes.data.totalVendors);
+        setTotalCustomers(statsRes.data.totalCustomers);
+        setTotalOrders(statsRes.data.totalOrders);
+        setTotalRevenue(statsRes.data.totalRevenue);
+      } catch (err) {
+        // handle error
+      }
+    };
+    const fetchPendingVendors = async () => {
+      try {
+        const res = await axios.get("/admin/pending-vendors");
+        setPendingVendors(res.data);
+      } catch (err) {}
+    };
+    const fetchRecentOrders = async () => {
+      try {
+        const res = await axios.get("/admin/recent-orders");
+        setRecentOrders(res.data);
+      } catch (err) {}
+    };
+    const fetchTopVendors = async () => {
+      try {
+        const res = await axios.get("/admin/top-vendors");
+        setTopVendors(res.data);
+      } catch (err) {}
+    };
+    fetchStats();
+    fetchPendingVendors();
+    fetchRecentOrders();
+    fetchTopVendors();
+  }, []);
 
   const approveVendor = (vendorId: number) => {
     console.log("Approving vendor:", vendorId);

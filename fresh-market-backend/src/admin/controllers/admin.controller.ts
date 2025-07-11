@@ -13,6 +13,30 @@ import { UpdateOrderStatusDto } from '../../orders/dto/update-order-status.dto';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN) // All endpoints in this controller require ADMIN role
 export class AdminController {
+  // --- Dashboard Endpoints ---
+  @Get('stats')
+  @HttpCode(HttpStatus.OK)
+  async getStats() {
+    return this.adminService.getDashboardStats();
+  }
+
+  @Get('pending-vendors')
+  @HttpCode(HttpStatus.OK)
+  async getPendingVendors() {
+    return this.adminService.getPendingVendors();
+  }
+
+  @Get('recent-orders')
+  @HttpCode(HttpStatus.OK)
+  async getRecentOrders() {
+    return this.adminService.getRecentOrders();
+  }
+
+  @Get('top-vendors')
+  @HttpCode(HttpStatus.OK)
+  async getTopVendors() {
+    return this.adminService.getTopVendors();
+  }
   constructor(private adminService: AdminService) {}
 
   // --- User Management ---
