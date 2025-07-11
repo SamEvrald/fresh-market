@@ -12,6 +12,8 @@ import { AuthModule } from '../auth/auth.module'; // For JwtAuthGuard, RolesGuar
 import { ShopsModule } from '../shops/shops.module'; // To use ShopsService for shop lookup
 import { ProductsModule } from '../products/products.module'; // To use ProductsService for product lookup/stock update
 import { NotificationsModule } from '../notifications/notifications.module'; // For EmailService
+import { SocketGateway } from '../socket/socket.gateway';
+import { SocketModule } from '../socket/socket.module';
 
 @Module({
   imports: [
@@ -20,6 +22,7 @@ import { NotificationsModule } from '../notifications/notifications.module'; // 
     ShopsModule, // For ShopsService (to verify shop ownership/existence)
     ProductsModule, // For ProductsService (to get products, update stock)
     NotificationsModule, // For EmailService (order confirmations, status updates)
+    SocketModule
   ],
   controllers: [OrdersController],
   providers: [OrdersService],

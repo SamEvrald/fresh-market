@@ -19,20 +19,20 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { email }, relations: ['profile'] });
   }
 
-  async createUser(email: string, hashedPassword: string, fullName: string, role: UserRole): Promise<User> {
-    const user = this.usersRepository.create({ email, password: hashedPassword });
-    await this.usersRepository.save(user);
+ async createUser(email: string, hashedPassword: string, fullName: string, role: UserRole): Promise<User> {
+  const user = this.usersRepository.create({ email, password: hashedPassword }); // ✅ Removed role here
+  await this.usersRepository.save(user);
 
-    const profile = this.profilesRepository.create({
-      id: user.id, // Profile ID is the same as User ID
-      fullName,
-      role,
-    });
-    await this.profilesRepository.save(profile);
+  const profile = this.profilesRepository.create({
+    id: user.id,
+    fullName,
+    role,
+  });
+  await this.profilesRepository.save(profile);
 
-    user.profile = profile; // Link profile to user object
-    return user;
-  }
+  user.profile = profile;
+  return user;
+}
 
   async findUserById(id: string): Promise<User | undefined> {
     return this.usersRepository.findOne({ where: { id }, relations: ['profile'] });

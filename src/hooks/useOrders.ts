@@ -1,71 +1,105 @@
-// src/hooks/usePayments.ts
-
-// Removed: import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult, InvalidateQueryFilters } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000/api/v1'; // Your NestJS backend URL
+const API_BASE_URL = 'http://localhost:3000/api/v1';
 
-export const usePayments = () => {
+interface OrderItem {
+  productId: string;
+  quantity: number;
+}
+
+interface Shop {
+  name: string;
+}
+
+interface Order {
+  id: string;
+  customer_id: string;
+  shop_id: string;
+  total_amount: number;
+  delivery_fee: number;
+  delivery_address: string;
+  status: string;
+  payment_status: string;
+  payment_method: string;
+  items: OrderItem[];
+  created_at: string;
+  updated_at: string;
+  shops?: Shop;
+  order_items?: any[];
+  total_price?: number;
+}
+
+export const useOrders = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  const processMTNPayment = async (paymentData: {
-    orderId: string;
-    amount: number;
-    phoneNumber: string;
-    customerName: string;
-  }) => {
-    try {
-      // Assuming your backend has an endpoint for MTN payments
-      const response = await fetch(`${API_BASE_URL}/payments/mtn`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(paymentData),
-      });
+  const ordersQuery = useQuery<Order[]>({
+    queryKey: ['orders'],
+    queryFn: async () => {
+      const { data } = await axios.get(`${API_BASE_URL}/orders`);
+      return data;
+    },
+    enabled: !!user,
+  });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `MTN payment failed: ${response.statusText}`);
-      }
+  const vendorOrdersQuery = useQuery<Order[]>({
+    queryKey: ['vendor-orders'],
+    queryFn: async () => {
+      const { data } = await axios.get(`${API_BASE_URL}/vendor-orders`);
+      return data;
+    },
+    enabled: !!user && user.role === 'vendor',
+  });
 
-      const data = await response.json();
+  const createOrder = useMutation({
+    mutationFn: async (orderData: any) => {
+      const { data } = await axios.post(`${API_BASE_URL}/orders`, orderData);
+      return data;
+    },
+    onSuccess: () => {
+      toast({ title: 'Order created successfully' });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+    onError: () => {
+      toast({ title: 'Error creating order', variant: 'destructive' });
+    },
+  });
 
-      toast({
-        title: "Payment Request Created",
-        description: "Please complete the payment using the provided USSD code or QR code.",
-      });
+  const updateOrderStatus = useMutation({
+    mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
+      const { data } = await axios.patch(`${API_BASE_URL}/orders/${orderId}/status`, { status });
+      return data;
+    },
+    onSuccess: () => {
+      toast({ title: 'Order status updated' });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+    onError: () => {
+      toast({ title: 'Error updating order status', variant: 'destructive' });
+    },
+  });
 
-      return { success: true, data };
-    } catch (error: any) {
-      console.error('MTN payment failed:', error);
-      toast({
-        title: "Payment Failed",
-        description: error.message,
-        variant: "destructive"
-      });
-      return { success: false, error };
-    }
-  };
-
-  const processAirtelPayment = async (paymentData: {
-    orderId: string;
-    amount: number;
-    phoneNumber: string;
-    customerName: string;
-  }) => {
-    // Placeholder for Airtel Money integration
-    console.log('Airtel payment integration coming soon:', paymentData);
-    toast({
-      title: "Coming Soon",
-      description: "Airtel Money payment integration is under development.",
-      variant: "destructive"
+  const getOrderById = (orderId: string): UseQueryResult<Order> => {
+    return useQuery({
+      queryKey: ['order', orderId],
+      queryFn: async () => {
+        const { data } = await axios.get(`${API_BASE_URL}/orders/${orderId}`);
+        return data;
+      },
     });
-    return { success: false, error: 'Not implemented yet' };
   };
 
   return {
-    processMTNPayment,
-    processAirtelPayment,
+    orders: ordersQuery.data || [],
+    isLoadingOrders: ordersQuery.isLoading,
+    vendorOrders: vendorOrdersQuery.data || [],
+    isLoadingVendorOrders: vendorOrdersQuery.isLoading,
+    createOrder,
+    updateOrderStatus,
+    getOrderById,
   };
 };

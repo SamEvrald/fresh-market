@@ -17,7 +17,8 @@ const CustomerAccount = () => {
   const { toast } = useToast();
   // REMOVED: deleteAccount from useAuth. This functionality should be handled by your backend auth service.
   const { user, updatePassword, signOut } = useAuth();
-  const { orders, isLoading: isLoadingOrders } = useOrders();
+  const { orders, isLoadingOrders } = useOrders();
+
 
   const [userInfo, setUserInfo] = useState({
     fullName: "",
@@ -42,9 +43,9 @@ const CustomerAccount = () => {
         // Example: const response = await yourBackendService.getUserProfile(user.id);
         // For now, simulating with user data from AuthContext
         setUserInfo({
-          fullName: user.user_metadata?.full_name || "",
+          fullName: user.full_name || "",
           email: user.email || "",
-          phone: user.user_metadata?.phone || "", // Assuming phone is part of user_metadata
+          phone: user.phone || "",// Assuming phone is part of user_metadata
         });
       } catch (error) {
         console.error("Failed to fetch user profile:", error);

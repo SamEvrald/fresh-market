@@ -1,129 +1,125 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
-import { useEmailNotifications } from '@/hooks/useEmailNotifications';
+import axios from 'axios';
+
+axios.defaults.baseURL = 'http://localhost:3000/api/v1';
+
+
+interface CurrentUser {
+  profile: any;
+  id: string;
+  email: string;
+  role: 'customer' | 'vendor' | 'admin';
+  full_name?: string;
+  phone?: string;
+}
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
-  userRole: string | null;
+  user: CurrentUser | null;
+  userRole: 'customer' | 'vendor' | 'admin' | null;
   loading: boolean;
   signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: any; user?: CurrentUser }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
+  updatePassword: (email: string, newPassword: string) => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [user, setUser] = useState<CurrentUser | null>(null);
+  const [userRole, setUserRole] = useState<'customer' | 'vendor' | 'admin' | null>(null);
   const [loading, setLoading] = useState(true);
-  const { sendWelcomeEmail } = useEmailNotifications();
+
+  const loadProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await axios.get('/auth/profile', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const userData = response.data;
+      setUser(userData);
+      setUserRole(userData.profile.role);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Fetch user role
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', session.user.id)
-            .single();
-          
-          setUserRole(profile?.role || null);
-
-          // Send welcome email for new users
-          if (event === 'SIGNED_IN' && session.user.email) {
-            // Check if this is a new user by checking if they have a profile
-            if (!profile) {
-              setTimeout(() => {
-                sendWelcomeEmail({
-                  customerEmail: session.user.email!,
-                  customerName: session.user.user_metadata?.full_name || 'Customer'
-                });
-              }, 1000);
-            }
-          }
-        } else {
-          setUserRole(null);
-        }
-        
-        setLoading(false);
-      }
-    );
-
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    loadProfile();
   }, []);
 
   const signUp = async (email: string, password: string, metadata?: any) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: metadata,
-        emailRedirectTo: `${window.location.origin}/`
-      }
-    });
-    return { error };
+    try {
+      await axios.post('/auth/register', {
+        email,
+        password,
+        fullName: metadata?.fullName || '',
+        role: metadata?.role || '' // fallback if not provided
+      });
+      return { error: null };
+    } catch (error: any) {
+      console.error('Sign up error details:', error.response?.data);
+      return { error: error.response?.data?.message || 'Sign up failed' };
+    }
   };
+
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    return { error };
+    try {
+      const res = await axios.post('/auth/login', { email, password });
+      const token = res.data.accessToken;
+      localStorage.setItem('token', token);
+      await loadProfile();
+      return { error: null, user: res.data.user }; // ✅ make sure this is returned
+    } catch (error: any) {
+      return { error: error.response?.data?.message || 'Login failed' };
+    }
   };
 
+
   const signOut = async () => {
-    await supabase.auth.signOut();
+    localStorage.removeItem('token');
+    setUser(null);
+    setUserRole(null);
   };
 
   const resetPassword = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`
-    });
-    return { error };
+    try {
+      await axios.post('/auth/forgot-password', { email });
+      return { error: null };
+    } catch (error: any) {
+      return { error: error.response?.data?.message || 'Failed to send reset email' };
+    }
   };
 
-  const value = {
-    user,
-    session,
-    userRole,
-    loading,
-    signUp,
-    signIn,
-    signOut,
-    resetPassword
+  const updatePassword = async (email: string, newPassword: string) => {
+    try {
+      await axios.post('/auth/reset-password', { email, newPassword });
+      return { error: null };
+    } catch (error: any) {
+      return { error: error.response?.data?.message || 'Password update failed' };
+    }
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider
+      value={{ user, userRole, loading, signUp, signIn, signOut, resetPassword, updatePassword }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };

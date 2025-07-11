@@ -11,6 +11,8 @@ import { CreateOrderDto } from '../dto/create-order.dto';
 import { UpdateOrderStatusDto } from '../dto/update-order-status.dto';
 import { OrderStatus } from '../../common/enums/order-status.enum';
 import { EmailService } from '../../notifications/services/email.service'; // For notifications
+import { SocketGateway } from '../../socket/socket.gateway'; // adjust path as needed
+
 
 @Injectable()
 export class OrdersService {
@@ -29,7 +31,8 @@ export class OrdersService {
     private shopsRepository: Repository<Shop>,
     private dataSource: DataSource, // Inject DataSource for transactions
     private emailService: EmailService, // Inject EmailService
-  ) {}
+    private readonly socketGateway: SocketGateway,
+  ) { }
 
   /**
    * Creates a new order by a customer.
@@ -96,6 +99,14 @@ export class OrdersService {
       const savedOrder = await queryRunner.manager.save(Order, order);
 
       await queryRunner.commitTransaction();
+      this.socketGateway.server.emit('orderCreated', {
+        id: savedOrder.id,
+        shopId: savedOrder.shopId,
+        status: savedOrder.status,
+        customerId: savedOrder.customerId,
+        createdAt: savedOrder.createdAt,
+      });
+
 
       // Send order confirmation email
       try {
@@ -231,6 +242,14 @@ export class OrdersService {
     }
 
     const updatedOrder = await this.ordersRepository.save(order);
+    this.socketGateway.server.emit('orderUpdated', {
+      id: updatedOrder.id,
+      shopId: updatedOrder.shopId,
+      status: updatedOrder.status,
+      customerId: updatedOrder.customerId,
+      updatedAt: updatedOrder.updatedAt,
+    });
+
 
     // Send order status update email
     try {

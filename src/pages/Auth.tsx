@@ -18,11 +18,11 @@ const Auth = () => {
 
   // Form states
   const [signInData, setSignInData] = useState({ email: "", password: "" });
-  const [signUpData, setSignUpData] = useState({ 
-    email: "", 
-    password: "", 
-    fullName: "", 
-    role: "customer" as "customer" | "vendor" 
+  const [signUpData, setSignUpData] = useState({
+    email: "",
+    password: "",
+    fullName: "",
+    role: "customer" as "customer" | "vendor"
   });
   const [resetEmail, setResetEmail] = useState("");
 
@@ -34,9 +34,9 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    const { error } = await signIn(signInData.email, signInData.password);
-    
+
+    const { error, user } = await signIn(signInData.email, signInData.password);
+
     if (error) {
       toast({
         title: "Sign In Failed",
@@ -44,11 +44,26 @@ const Auth = () => {
         variant: "destructive",
       });
     } else {
-      navigate("/");
+      toast({
+  title: "Welcome!",
+  description: `Logged in as ${user?.profile?.role}`,
+});
+
+if (user?.profile?.role === "vendor") {
+  navigate("/vendor/dashboard");
+} else if (user?.profile?.role === "customer") {
+  navigate("/account");
+} else if (user?.profile?.role === "admin") {
+  navigate("/admin");
+} else {
+  navigate("/");
+}
+
     }
-    
+
     setIsLoading(false);
   };
+
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,8 +72,10 @@ const Auth = () => {
     const { error } = await signUp(
       signUpData.email,
       signUpData.password,
-      signUpData.fullName,
-      signUpData.role
+      {
+        fullName: signUpData.fullName,
+        role: signUpData.role,
+      }
     );
 
     if (error) {
@@ -75,7 +92,7 @@ const Auth = () => {
       // Optionally redirect to login or home
       navigate("/auth");
     }
-    
+
     setIsLoading(false);
   };
 
@@ -133,8 +150,8 @@ const Auth = () => {
                     onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
                     required
                   />
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full bg-green-500 hover:bg-green-600"
                     disabled={isLoading}
                   >
@@ -175,8 +192,8 @@ const Auth = () => {
                       <SelectItem value="vendor">Vendor</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full bg-green-500 hover:bg-green-600"
                     disabled={isLoading}
                   >
@@ -184,7 +201,7 @@ const Auth = () => {
                   </Button>
                 </form>
               </TabsContent>
-              
+
               <TabsContent value="reset">
                 <form onSubmit={handleResetPassword} className="space-y-4">
                   <Input
@@ -194,8 +211,8 @@ const Auth = () => {
                     onChange={(e) => setResetEmail(e.target.value)}
                     required
                   />
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full bg-green-500 hover:bg-green-600"
                     disabled={isLoading}
                   >

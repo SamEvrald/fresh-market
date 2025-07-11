@@ -27,7 +27,7 @@ import { Order } from './common/entities/order.entity';
 import { OrderItem } from './common/entities/order-item.entity';
 import { Review } from './common/entities/review.entity';
 (global as any).crypto = require('crypto');
-
+import { SocketGateway } from './socket/socket.gateway';
 
 
 @Module({
@@ -64,6 +64,6 @@ import { Review } from './common/entities/review.entity';
     AdminModule, // Add AdminModule here
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, SocketGateway],
 })
 export class AppModule {}

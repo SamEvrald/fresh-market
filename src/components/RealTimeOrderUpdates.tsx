@@ -1,9 +1,10 @@
-
 import { useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
+import { io, Socket } from 'socket.io-client';
+
+let socket: Socket | null = null;
 
 const RealTimeOrderUpdates = () => {
   const { toast } = useToast();
@@ -13,50 +14,36 @@ const RealTimeOrderUpdates = () => {
   useEffect(() => {
     if (!user) return;
 
-    const channel = supabase
-      .channel('order-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'orders'
-        },
-        (payload) => {
-          const order = payload.new as any;
-          
-          // Show notification for status changes
-          if (payload.old && (payload.old as any).status !== order.status) {
-            toast({
-              title: "Order Status Updated",
-              description: `Your order is now ${order.status.replace('_', ' ')}`
-            });
-          }
-          
-          // Invalidate orders query to refresh the UI
-          queryClient.invalidateQueries({ queryKey: ['orders'] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'orders'
-        },
-        () => {
-          // Refresh orders when new order is created
-          queryClient.invalidateQueries({ queryKey: ['orders'] });
-        }
-      )
-      .subscribe();
+    // Connect to your backend's websocket endpoint
+    socket = io('http://localhost:3000', {
+      auth: {
+        token: localStorage.getItem('token'),
+      },
+    });
+
+    socket.on('connect', () => {
+      console.log('Connected to socket server');
+    });
+
+    socket.on('orderUpdated', (order: any) => {
+      toast({
+        title: 'Order Status Updated',
+        description: `Your order is now ${order.status.replace('_', ' ')}`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    });
+
+    socket.on('orderCreated', () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      socket?.disconnect();
     };
   }, [user, toast, queryClient]);
 
-  return null; // This is a utility component with no UI
+  return null;
 };
 
 export default RealTimeOrderUpdates;
