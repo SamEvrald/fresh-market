@@ -7,6 +7,17 @@ import { Review } from './review.entity'; // Will be created later for ReviewsMo
 
 @Entity('shops')
 export class Shop {
+  @Column({ name: 'phone_number', nullable: true })
+  phoneNumber: string;
+
+  @Column({ name: 'email', nullable: true })
+  email: string;
+
+  @Column({ name: 'website', nullable: true })
+  website: string;
+
+  @Column({ name: 'status', default: 'pending' })
+  status: string;
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -51,11 +62,11 @@ export class Shop {
   @OneToMany(() => Product, product => product.shop)
   products: Product[];
 
-  @OneToMany(() => Order, order => order.shop)
-  orders: Order[];
+  // Removed relation to Order entity, use shop_id in Order for queries
 
   @OneToMany(() => Review, review => review.shop)
   reviews: Review[];
+  orders: any;
 
   
 }

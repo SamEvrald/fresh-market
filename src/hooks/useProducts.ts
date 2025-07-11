@@ -24,14 +24,32 @@ export const useProducts = () => {
     }
   });
 
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   const createProduct = useMutation({
     mutationFn: async (productData: any) => {
-      const response = await fetch(`${API_BASE_URL}/products`, {
+      // Use FormData for file upload (image)
+      const formData = new FormData();
+      formData.append('name', productData.name);
+      formData.append('description', productData.description || "");
+      formData.append('price', productData.price);
+      formData.append('unit', productData.unit || "kg");
+      formData.append('category', productData.category || "");
+      formData.append('stockQuantity', productData.stockQuantity || productData.stock || 0);
+      formData.append('isAvailable', productData.isAvailable ? "true" : "false");
+      if (productData.imageFile) {
+        formData.append('image', productData.imageFile);
+      }
+
+      const response = await fetch(`${API_BASE_URL}/shops/me/products`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
         },
-        body: JSON.stringify(productData),
+        body: formData,
       });
 
       if (!response.ok) {

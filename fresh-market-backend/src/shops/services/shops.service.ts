@@ -46,7 +46,17 @@ export class ShopsService {
     }
 
     const shop = this.shopsRepository.create({
-      ...createShopDto,
+      name: createShopDto.name,
+      description: createShopDto.description,
+      address: createShopDto.address,
+      city: createShopDto.city,
+      businessHours: createShopDto.businessHours,
+      deliveryRadius: createShopDto.deliveryRadius,
+      shopType: createShopDto.shopType || 'fruit_shop',
+      phoneNumber: createShopDto.phoneNumber,
+      email: createShopDto.email,
+      website: createShopDto.website,
+      status: 'pending',
       ownerId: ownerId,
       isActive: false, // Shops are inactive by default, until approved by admin
     });

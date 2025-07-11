@@ -16,10 +16,10 @@ export class Order {
   @Column({ name: 'shop_id', type: 'uuid' })
   shopId: string; // Foreign key to Shop
 
-  // @Column({ type: 'decimal', precision: 10, scale: 2 })
-  // totalPrice: number;
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  totalPrice: number;
 
-@Column({ type: 'numeric', name: 'total_amount' })
+  @Column({ type: 'numeric', name: 'total_amount' })
 total_amount: number;
 
   @Column({

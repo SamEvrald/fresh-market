@@ -6,9 +6,9 @@ export class CreateShopDto {
   @IsNotEmpty()
   name: string;
 
-  @IsOptional()
   @IsString()
-  description?: string;
+  @IsNotEmpty()
+  description: string;
 
   @IsString()
   @IsNotEmpty()
@@ -31,6 +31,18 @@ export class CreateShopDto {
   @IsOptional()
   @IsString()
   shopType?: string; // 'fruit_shop' is default in schema, but allow override if needed
+
+  @IsString()
+  @IsNotEmpty()
+  phoneNumber: string;
+
+  @IsString()
+  @IsNotEmpty()
+  email: string;
+
+  @IsOptional()
+  @IsString()
+  website?: string;
 
   // isActive will be set by admin or defaults to false
 }

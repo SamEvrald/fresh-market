@@ -55,12 +55,22 @@ const AdminDashboard = () => {
     fetchTopVendors();
   }, []);
 
-  const approveVendor = (vendorId: number) => {
-    console.log("Approving vendor:", vendorId);
+  const approveVendor = async (vendorId: number) => {
+    try {
+      await axios.patch(`/admin/approve-vendor/${vendorId}`);
+      setPendingVendors(prev => prev.filter(v => v.id !== vendorId));
+    } catch (err) {
+      // handle error, e.g. toast
+    }
   };
 
-  const rejectVendor = (vendorId: number) => {
-    console.log("Rejecting vendor:", vendorId);
+  const rejectVendor = async (vendorId: number) => {
+    try {
+      await axios.patch(`/admin/reject-vendor/${vendorId}`);
+      setPendingVendors(prev => prev.filter(v => v.id !== vendorId));
+    } catch (err) {
+      // handle error, e.g. toast
+    }
   };
 
   return (

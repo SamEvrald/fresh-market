@@ -41,10 +41,10 @@ export class Profile {
   @OneToMany(() => Shop, shop => shop.owner)
   shops: Shop[];
 
-  @OneToMany(() => Order, order => order.customer) // Add this relation for customer's orders
-  customerOrders: Order[];
+  // Removed relation to Order entity, use customer_id in Order for queries
 
   @OneToMany(() => Review, review => review.customer) // Add this relation for customer's reviews
   reviews: Review[];
     isActive: boolean;
+  customerOrders: any;
 }

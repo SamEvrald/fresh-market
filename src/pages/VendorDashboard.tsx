@@ -8,6 +8,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useShops } from "@/hooks/useShops";
 import { useProducts } from "@/hooks/useProducts";
 import api from "@/api/axios";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const API_BASE_URL = 'http://localhost:3000/api/v1'; // Your NestJS backend URL
 
@@ -25,6 +30,19 @@ const VendorDashboard = () => {
   const { products, isLoading: productsLoading, createProduct } = useProducts();
   // Using the existing useShops hook for shop data (if needed for vendor-specific dashboard info)
   const { shops, isLoading: shopsLoading, updateShop } = useShops();
+
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [productForm, setProductForm] = useState({
+    name: "",
+    description: "",
+    price: "",
+    stock: "",
+    category: "",
+    unit: "kg",
+    imageUrl: "",
+    imageFile: null,
+    isAvailable: true,
+  });
 
   useEffect(() => {
    const fetchDashboardData = async () => {
@@ -95,13 +113,43 @@ const VendorDashboard = () => {
   };
 
   const handleAddProduct = () => {
-    // Example: Open a modal/form to get product data, then call createProduct.mutate
-    toast({
-      title: "Add Product",
-      description: "Opening form to add new product...",
+    setShowProductModal(true);
+  };
+
+  const handleProductInputChange = (field: string, value: string) => {
+    setProductForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleProductFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setProductForm(prev => ({ ...prev, imageFile: e.target.files[0] }));
+    }
+  };
+
+  const handleProductSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createProduct.mutate({
+      name: productForm.name,
+      description: productForm.description,
+      price: parseFloat(productForm.price),
+      unit: productForm.unit,
+      category: productForm.category,
+      stockQuantity: parseInt(productForm.stock),
+      isAvailable: productForm.isAvailable,
+      imageFile: productForm.imageFile,
     });
-    // For a real implementation, you'd show a form and then use:
-    // createProduct.mutate({ name: "New Product", price: 100, /* ...other fields */ });
+    setShowProductModal(false);
+    setProductForm({
+      name: "",
+      description: "",
+      price: "",
+      stock: "",
+      category: "",
+      unit: "kg",
+      imageUrl: "",
+      imageFile: null,
+      isAvailable: true,
+    });
   };
 
  const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
@@ -342,6 +390,61 @@ const VendorDashboard = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Product Creation Modal */}
+        <Dialog open={showProductModal} onOpenChange={setShowProductModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Product</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleProductSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="productName">Product Name</Label>
+                <Input id="productName" value={productForm.name} onChange={e => handleProductInputChange("name", e.target.value)} required />
+              </div>
+              <div>
+                <Label htmlFor="productDescription">Description</Label>
+                <Textarea id="productDescription" value={productForm.description} onChange={e => handleProductInputChange("description", e.target.value)} required />
+              </div>
+              <div>
+                <Label htmlFor="productPrice">Price</Label>
+                <Input id="productPrice" type="number" min="0" step="0.01" value={productForm.price} onChange={e => handleProductInputChange("price", e.target.value)} required />
+              </div>
+              <div>
+                <Label htmlFor="productStock">Stock</Label>
+                <Input id="productStock" type="number" min="0" value={productForm.stock} onChange={e => handleProductInputChange("stock", e.target.value)} required />
+              </div>
+              <div>
+                <Label htmlFor="productCategory">Category</Label>
+                <Select value={productForm.category} onValueChange={value => handleProductInputChange("category", value)} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fruit">Fruit</SelectItem>
+                    <SelectItem value="vegetable">Vegetable</SelectItem>
+                    <SelectItem value="organic">Organic</SelectItem>
+                    <SelectItem value="exotic">Exotic</SelectItem>
+                    <SelectItem value="local">Local Produce</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="productUnit">Unit</Label>
+                <Input id="productUnit" value={productForm.unit} onChange={e => handleProductInputChange("unit", e.target.value)} required />
+              </div>
+              <div>
+                <Label htmlFor="productImage">Image</Label>
+                <Input id="productImage" type="file" accept="image/*" onChange={handleProductFileChange} />
+              </div>
+              <DialogFooter>
+                <Button type="submit" className="bg-green-600 hover:bg-green-700">Add Product</Button>
+                <Button type="button" variant="outline" onClick={() => setShowProductModal(false)}>Cancel</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

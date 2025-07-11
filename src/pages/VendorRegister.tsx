@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,9 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
+import axios from "../api/axios";
+import { useNavigate } from "react-router-dom";
 
 const VendorRegister = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     shopName: "",
     ownerName: "",
@@ -22,20 +24,44 @@ const VendorRegister = () => {
     description: "",
     businessHours: "",
     deliveryRadius: "",
-    shopType: ""
+    shopType: "",
+    website: ""
   });
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Vendor registration data:", formData);
-    toast({
-      title: "Registration Submitted!",
-      description: "We'll review your application and get back to you within 24 hours.",
-    });
+    const payload: any = {
+      name: formData.shopName,
+      description: formData.description,
+      address: formData.address,
+      city: formData.city,
+      phoneNumber: formData.phone,
+      email: formData.email,
+      businessHours: formData.businessHours,
+      deliveryRadius: formData.deliveryRadius ? parseInt(formData.deliveryRadius) : undefined,
+      shopType: formData.shopType,
+    };
+    if (formData.website && formData.website.trim() !== "") {
+      payload.website = formData.website;
+    }
+    try {
+      await axios.post("/shops", payload);
+      toast({
+        title: "Registration Submitted!",
+        description: "We'll review your application and get back to you within 24 hours.",
+      });
+      navigate("/vendor-dashboard");
+    } catch (err: any) {
+      toast({
+        title: "Registration Failed",
+        description: err?.response?.data?.message || err.message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -192,6 +218,16 @@ const VendorRegister = () => {
                       onChange={(e) => handleInputChange("description", e.target.value)}
                       placeholder="Tell customers about your shop, specialties, and what makes you unique"
                       rows={4}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="website">Website URL</Label>
+                    <Input
+                      id="website"
+                      value={formData.website}
+                      onChange={(e) => handleInputChange("website", e.target.value)}
+                      placeholder="https://yourshopwebsite.com"
                     />
                   </div>
                 </div>
