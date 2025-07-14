@@ -16,9 +16,7 @@ export class CreateProductDto {
   @Type(() => Number) // Ensure price is transformed to a number
   price: number;
 
-  @IsOptional()
-  @IsString()
-  unit?: string; // e.g., 'kg', 'piece', 'bundle'
+  // Removed unit field
 
   @IsOptional()
   @IsString()
@@ -31,6 +29,7 @@ export class CreateProductDto {
   stockQuantity?: number;
 
   @IsOptional()
+  @Type(() => Boolean) // Ensure isAvailable is transformed to a boolean
   @IsBoolean()
   isAvailable?: boolean;
 

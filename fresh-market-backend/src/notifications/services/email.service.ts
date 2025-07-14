@@ -94,12 +94,12 @@ export class EmailService {
                   <ul>
                     ${orderItemsHtml}
                   </ul>
-                  <p><b>Total Price:</b> ${order.totalPrice} RWF</p>
-                  <p><b>Shipping Address:</b> ${order.shippingAddress}</p>
+                  <p><b>Total Price:</b> ${order.total_amount} RWF</p>
+                  <p><b>Shipping Address:</b> ${order.deliveryAddress}</p>
                   <p>We will notify you when your order status changes.</p>
                   <p>Best regards,<br>The Fresh Market Team</p>`;
 
-    const text = `Hello ${userName},\nThank you for your order from ${order.shop ? order.shop.name : 'your chosen shop'}!\nYour order #${order.id.substring(0, 8)} has been confirmed and is currently ${order.status.toUpperCase()}.\nOrder Details:\n${order.orderItems.map(item => `${item.quantity} x ${item.product ? item.product.name : 'Unknown Product'} (${item.priceAtOrder} RWF each)`).join('\n')}\nTotal Price: ${order.totalPrice} RWF\nShipping Address: ${order.shippingAddress}\nWe will notify you when your order status changes.\nBest regards,\nThe Fresh Market Team`;
+    const text = `Hello ${userName},\nThank you for your order from ${order.shop ? order.shop.name : 'your chosen shop'}!\nYour order #${order.id.substring(0, 8)} has been confirmed and is currently ${order.status.toUpperCase()}.\nOrder Details:\n${order.orderItems.map(item => `${item.quantity} x ${item.product ? item.product.name : 'Unknown Product'} (${item.priceAtOrder} RWF each)`).join('\n')}\nTotal Price: ${order.total_amount} RWF\nShipping Address: ${order.deliveryAddress}\nWe will notify you when your order status changes.\nBest regards,\nThe Fresh Market Team`;
 
     await this.sendEmail(to, subject, html, text);
   }

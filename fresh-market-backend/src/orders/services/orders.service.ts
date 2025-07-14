@@ -41,7 +41,7 @@ export class OrdersService {
    * @returns The created order.
    */
   async createOrder(createOrderDto: CreateOrderDto, customerId: string): Promise<Order> {
-    const { shopId, items, shippingAddress, contactPhone, paymentMethod } = createOrderDto;
+    const { shopId, items, deliveryAddress, contactPhone, paymentMethod } = createOrderDto;
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -88,8 +88,8 @@ export class OrdersService {
       const order = this.ordersRepository.create({
         customer: customerProfile,
         shop: shop,
-        totalPrice: totalOrderPrice,
-        shippingAddress,
+        total_amount: totalOrderPrice,
+        deliveryAddress,
         contactPhone: contactPhone || customerProfile.phone, // Use customer's phone if not provided
         paymentMethod,
         status: OrderStatus.PENDING,

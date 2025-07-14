@@ -10,6 +10,16 @@ import Footer from "@/components/Footer";
 import { useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
 
+const CATEGORY_LIST = [
+  { value: 'all', label: 'All Categories' },
+  { value: 'local', label: 'Local' },
+  { value: 'organic', label: 'Organic' },
+  { value: 'exotic', label: 'Exotic' },
+  { value: 'citrus', label: 'Citrus' },
+];
+const BACKEND_URL = 'http://localhost:3000';
+
+
 const ProductCatalog = () => {
   const { products, isLoading } = useProducts();
   const { addToCart } = useCart();
@@ -32,9 +42,9 @@ const ProductCatalog = () => {
   }
 
   const filteredProducts = (products || [])
-    .filter(product => 
+    .filter(product =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.shops?.name && product.shops.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      (product.shop?.name && product.shop.name.toLowerCase().includes(searchTerm.toLowerCase()))
     )
     .filter(product => filterCategory === "all" || (product.category && product.category.toLowerCase() === filterCategory))
     .sort((a, b) => {
@@ -53,7 +63,7 @@ const ProductCatalog = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
+
       <div className="container mx-auto px-4 py-8">
         {/* Header Section */}
         <div className="mb-8">
@@ -81,11 +91,9 @@ const ProductCatalog = () => {
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="local">Local</SelectItem>
-                <SelectItem value="organic">Organic</SelectItem>
-                <SelectItem value="exotic">Exotic</SelectItem>
-                <SelectItem value="citrus">Citrus</SelectItem>
+                {CATEGORY_LIST.map(cat => (
+                  <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -124,12 +132,13 @@ const ProductCatalog = () => {
             {filteredProducts.map((product) => (
               <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                 <div className="aspect-square relative">
+
                   <img
-                    src={product.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=300&h=300&fit=crop"}
+                    src={product.imageUrl?.startsWith('/') ? `${BACKEND_URL}${product.imageUrl}` : product.imageUrl}
                     alt={product.name}
                     className="w-full h-full object-cover"
                   />
-                  {!product.is_available && (
+                  {!product.isAvailable && (
                     <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                       <span className="text-white font-semibold">Out of Stock</span>
                     </div>
@@ -140,24 +149,22 @@ const ProductCatalog = () => {
                     </div>
                   )}
                 </div>
-                
                 <CardContent className="p-4">
                   <h3 className="font-semibold text-lg mb-1">{product.name}</h3>
-                  <p className="text-gray-600 text-sm mb-2">{product.shops?.name || 'Unknown Shop'}</p>
+                  <p className="text-gray-600 text-sm mb-2">{product.shop?.name || 'Unknown Shop'}</p>
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-xl font-bold text-green-600">
-                      ₹{product.price || 0}
+                      RWF {product.price || 0}
                     </span>
-                    <span className="text-gray-500 text-sm">per {product.unit || 'unit'}</span>
+                    {/* Removed unit display */}
                   </div>
-                  
-                  <Button
-                    onClick={() => addToCart(product)}
-                    disabled={!product.is_available}
+                  {/* <Button
+                    // onClick={() => addToCart(product)}
+                    disabled={!product.isAvailable}
                     className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-300"
                   >
-                    {product.is_available ? "Add to Cart" : "Out of Stock"}
-                  </Button>
+                    {product.isAvailable ? "Add to Cart" : "Out of Stock"}
+                  </Button> */}
                 </CardContent>
               </Card>
             ))}

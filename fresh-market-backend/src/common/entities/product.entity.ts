@@ -21,11 +21,10 @@ export class Product {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price: number;
 
-  @Column({ default: 'kg' })
-  unit: string;
+  // Removed unit field
 
-  @Column({ nullable: true })
-  category: string;
+  // @Column({ nullable: true })
+  // category: string;
 
   @Column({ name: 'image_url', nullable: true })
   imageUrl: string; // Path to locally stored image

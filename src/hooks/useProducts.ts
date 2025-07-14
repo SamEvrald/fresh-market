@@ -36,7 +36,7 @@ export const useProducts = () => {
       formData.append('name', productData.name);
       formData.append('description', productData.description || "");
       formData.append('price', productData.price);
-      formData.append('unit', productData.unit || "kg");
+      // unit field removed
       formData.append('category', productData.category || "");
       formData.append('stockQuantity', productData.stockQuantity || productData.stock || 0);
       formData.append('isAvailable', productData.isAvailable ? "true" : "false");

@@ -32,8 +32,8 @@ async function bootstrap() {
   // Serve static files (product images)
   // Ensure 'uploads' directory exists in your project root
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
-    prefix: '/uploads/', // The URL path to access your static files, e.g., http://localhost:8081/uploads/products/image.jpg
-  });
+  prefix: '/uploads/',
+});
 
 
   const port = configService.get<number>('port');

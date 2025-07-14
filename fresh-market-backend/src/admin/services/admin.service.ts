@@ -210,7 +210,7 @@ export class AdminService {
     const totalOrders = await this.ordersRepository.count();
     const totalRevenueResult = await this.ordersRepository
       .createQueryBuilder('order')
-      .select('SUM(order.totalPrice)', 'totalRevenue')
+      .select('SUM(order.total_amount)', 'totalRevenue')
       .where('order.paymentStatus = :status', { status: 'paid' })
       .getRawOne();
 

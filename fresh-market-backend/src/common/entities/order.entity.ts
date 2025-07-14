@@ -16,8 +16,7 @@ export class Order {
   @Column({ name: 'shop_id', type: 'uuid' })
   shopId: string; // Foreign key to Shop
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
-  totalPrice: number;
+  // Removed totalPrice field
 
   @Column({ type: 'numeric', name: 'total_amount' })
 total_amount: number;
@@ -29,7 +28,7 @@ total_amount: number;
   })
   status: OrderStatus;
 
-  @Column({ name: 'shipping_address' })
+  @Column({ name: 'delivery_address' })
   deliveryAddress: string;
 
   @Column({ name: 'contact_phone', nullable: true })

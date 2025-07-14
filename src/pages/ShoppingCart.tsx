@@ -71,7 +71,7 @@ const ShoppingCartPage = () => {
       setCurrentOrder({
         id: order.id,
         total: total,
-        customerName: user.user_metadata?.full_name || 'Customer'
+        customerName: user.full_name || 'Customer'
       });
       setIsPaymentModalOpen(true);
     }

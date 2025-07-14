@@ -56,6 +56,15 @@ async getMyProducts(@Request() req) {
   return this.productsService.findAllProductsByOwner(req.user.id);
 }
 
+@Get('me/orders')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.VENDOR)
+@HttpCode(HttpStatus.OK)
+async getMyOrders(@Request() req) {
+  return this.shopsService.findOrdersByOwnerId(req.user.id);
+}
+
+
 // --- Customer/Public-facing Endpoints ---
 
 @Get('/')

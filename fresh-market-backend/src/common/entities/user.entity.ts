@@ -28,4 +28,6 @@ export class User {
   @OneToOne(() => Profile, profile => profile.user, { cascade: true })
   @JoinColumn({ name: 'id' }) // User ID is also the primary key for profile
   profile: Profile;
+
+  
 }

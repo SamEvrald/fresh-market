@@ -136,7 +136,7 @@ export class ShopsService {
 
   return this.ordersRepository.find({
     where: { shopId: shop.id },
-    relations: ['items', 'customer'], // or however you structure your orders
+    relations: ['orderItems', 'customer'],
     order: { createdAt: 'DESC' },
   });
 }

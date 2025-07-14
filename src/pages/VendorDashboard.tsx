@@ -16,6 +16,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 const API_BASE_URL = 'http://localhost:3000/api/v1'; // Your NestJS backend URL
 
+const CATEGORY_LIST = [
+  { value: 'local', label: 'Local' },
+  { value: 'organic', label: 'Organic' },
+  { value: 'exotic', label: 'Exotic' },
+  { value: 'citrus', label: 'Citrus' },
+];
+
 const VendorDashboard = () => {
   const { toast } = useToast();
 
@@ -38,7 +45,6 @@ const VendorDashboard = () => {
     price: "",
     stock: "",
     category: "",
-    unit: "kg",
     imageUrl: "",
     imageFile: null,
     isAvailable: true,
@@ -132,7 +138,6 @@ const VendorDashboard = () => {
       name: productForm.name,
       description: productForm.description,
       price: parseFloat(productForm.price),
-      unit: productForm.unit,
       category: productForm.category,
       stockQuantity: parseInt(productForm.stock),
       isAvailable: productForm.isAvailable,
@@ -145,7 +150,6 @@ const VendorDashboard = () => {
       price: "",
       stock: "",
       category: "",
-      unit: "kg",
       imageUrl: "",
       imageFile: null,
       isAvailable: true,
@@ -210,7 +214,7 @@ const VendorDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Today's Revenue</p>
-                  <p className="text-3xl font-bold text-gray-800">₹{todayRevenue}</p>
+                  <p className="text-3xl font-bold text-gray-800">RWF {todayRevenue}</p>
                 </div>
                 <DollarSign className="w-10 h-10 text-green-500" />
               </div>
@@ -273,7 +277,7 @@ const VendorDashboard = () => {
                         </div>
                       </div>
                       <div className="flex items-center space-x-4">
-                        <span className="font-semibold">₹{order.amount}</span>
+                        <span className="font-semibold">RWF {order.amount}</span>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                           {order.status}
                         </span>
@@ -302,10 +306,10 @@ const VendorDashboard = () => {
                       <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                         <div>
                           <p className="font-semibold">{product.name}</p>
-                          <p className="text-sm text-gray-600">{product.sold} units sold</p>
+                          <p className="text-sm text-gray-600">{product.sold} sold</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold">₹{product.revenue}</p>
+                          <p className="font-semibold">RWF {product.revenue}</p>
                           <p className="text-sm text-gray-600">Revenue</p>
                         </div>
                       </div>
@@ -327,11 +331,11 @@ const VendorDashboard = () => {
                     {/* These would ideally come from your backend's analytics endpoint */}
                     <div className="flex justify-between">
                       <span>This Week</span>
-                      <span className="font-semibold">₹12,450</span>
+                      <span className="font-semibold">RWF 12,450</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Last Week</span>
-                      <span className="font-semibold">₹10,200</span>
+                      <span className="font-semibold">RWF 10,200</span>
                     </div>
                     <div className="flex justify-between text-green-600">
                       <span>Growth</span>
@@ -358,7 +362,7 @@ const VendorDashboard = () => {
                     </div>
                     <div className="flex justify-between">
                       <span>Avg. Order Value</span>
-                      <span className="font-semibold">₹285</span>
+                      <span className="font-semibold">RWF 285</span>
                     </div>
                   </div>
                 </CardContent>
@@ -421,19 +425,13 @@ const VendorDashboard = () => {
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="fruit">Fruit</SelectItem>
-                    <SelectItem value="vegetable">Vegetable</SelectItem>
-                    <SelectItem value="organic">Organic</SelectItem>
-                    <SelectItem value="exotic">Exotic</SelectItem>
-                    <SelectItem value="local">Local Produce</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    {CATEGORY_LIST.map(cat => (
+                      <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label htmlFor="productUnit">Unit</Label>
-                <Input id="productUnit" value={productForm.unit} onChange={e => handleProductInputChange("unit", e.target.value)} required />
-              </div>
+              {/* Removed unit field from product creation */}
               <div>
                 <Label htmlFor="productImage">Image</Label>
                 <Input id="productImage" type="file" accept="image/*" onChange={handleProductFileChange} />
